@@ -56,6 +56,8 @@ from botocore.compat import MutableMapping, HAS_CRT
 
 logger = logging.getLogger(__name__)
 
+# override
+local_endpoint = os.environ.get("AWS_ENDPOINT_URL")
 
 class Session(object):
     """
@@ -812,7 +814,11 @@ class Session(object):
         :rtype: botocore.client.BaseClient
         :return: A botocore client instance
 
+        
         """
+        endpoint_url = local_endpoint
+        
+        
         default_client_config = self.get_default_client_config()
         # If a config is provided and a default config is set, then
         # use the config resulting from merging the two.
