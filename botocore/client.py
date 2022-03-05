@@ -51,7 +51,9 @@ from botocore.exceptions import ClientError # noqa
 from botocore.args import ClientArgsCreator # noqa
 from botocore import UNSIGNED # noqa
 
+import os
 
+local_endpoint = os.environ.get("AWS_ENDPOINT_URL")
 logger = logging.getLogger(__name__)
 history_recorder = get_global_history_recorder()
 
@@ -81,6 +83,9 @@ class ClientCreator(object):
                       credentials=None, scoped_config=None,
                       api_version=None,
                       client_config=None):
+        # override
+        endpoint_url = local_endpoint
+        
         responses = self._event_emitter.emit(
             'choose-service-name', service_name=service_name)
         service_name = first_non_none_response(responses, default=service_name)
@@ -421,7 +426,7 @@ class ClientEndpointBridge(object):
     explicit region setting is provided. For example, Amazon S3 client will
     utilize "us-east-1" by default if no region can be resolved."""
 
-    DEFAULT_ENDPOINT = '{service}.{region}.amazonaws.com'
+    DEFAULT_ENDPOINT = local_endpoint
     _DUALSTACK_CUSTOMIZED_SERVICES = ['s3', 's3-control']
 
     def __init__(self, endpoint_resolver, scoped_config=None,
@@ -431,42 +436,53 @@ class ClientEndpointBridge(object):
         self.endpoint_resolver = endpoint_resolver
         self.scoped_config = scoped_config
         self.client_config = client_config
-        self.default_endpoint = default_endpoint or self.DEFAULT_ENDPOINT
+        self.default_endpoint = local_endpoint # default_endpoint or self.DEFAULT_ENDPOINT
         self.config_store = config_store
 
     def resolve(self, service_name, region_name=None, endpoint_url=None,
-                is_secure=True):
-        region_name = self._check_default_region(service_name, region_name)
-        use_dualstack_endpoint = self._resolve_use_dualstack_endpoint(
-            service_name)
-        use_fips_endpoint = self._resolve_endpoint_variant_config_var(
-            'use_fips_endpoint'
-        )
-        resolved = self.endpoint_resolver.construct_endpoint(
-            service_name, region_name,
-            use_dualstack_endpoint=use_dualstack_endpoint,
-            use_fips_endpoint=use_fips_endpoint,
-        )
+#                is_secure=True):
+#        region_name = self._check_default_region(service_name, region_name)
+#        use_dualstack_endpoint = self._resolve_use_dualstack_endpoint(
+#            service_name)
+#        use_fips_endpoint = self._resolve_endpoint_variant_config_var(
+#            'use_fips_endpoint'
+#        )
+#        resolved = self.endpoint_resolver.construct_endpoint(
+#            service_name, region_name,
+#            use_dualstack_endpoint=use_dualstack_endpoint,
+#            use_fips_endpoint=use_fips_endpoint,
+#        )
+#
+#        # If we can't resolve the region, we'll attempt to get a global
+#        # endpoint for non-regionalized services (iam, route53, etc)
+#        if not resolved:
+#            # TODO: fallback partition_name should be configurable in the
+#            # future for users to define as needed.
+#            resolved = self.endpoint_resolver.construct_endpoint(
+#                service_name, region_name, partition_name='aws',
+#                use_dualstack_endpoint=use_dualstack_endpoint,
+#                use_fips_endpoint=use_fips_endpoint,
+#            )
+#
+#        if resolved:
+#            return self._create_endpoint(
+#                resolved, service_name, region_name, endpoint_url, is_secure)
+#        else:
+#            return self._assume_endpoint(service_name, region_name,
+#                                         endpoint_url, is_secure)
+#   
+#   
+        # aqui precisa mudar esse region name?
+        return self._assume_endpoint(service_name, region_name,
+                                         local_endpoint, is_secure)
 
-        # If we can't resolve the region, we'll attempt to get a global
-        # endpoint for non-regionalized services (iam, route53, etc)
-        if not resolved:
-            # TODO: fallback partition_name should be configurable in the
-            # future for users to define as needed.
-            resolved = self.endpoint_resolver.construct_endpoint(
-                service_name, region_name, partition_name='aws',
-                use_dualstack_endpoint=use_dualstack_endpoint,
-                use_fips_endpoint=use_fips_endpoint,
-            )
-
-        if resolved:
-            return self._create_endpoint(
-                resolved, service_name, region_name, endpoint_url, is_secure)
-        else:
-            return self._assume_endpoint(service_name, region_name,
-                                         endpoint_url, is_secure)
-
+        
+        
     def _check_default_region(self, service_name, region_name):
+        # override
+        return 'us-east-1'
+        # 
+                
         if region_name is not None:
             return region_name
         # Use the client_config region if no explicit region was provided.
@@ -530,13 +546,16 @@ class ClientEndpointBridge(object):
 
     def _assume_endpoint(self, service_name, region_name, endpoint_url,
                          is_secure):
+        # override
+        endpoint_url = local_endpoint
+                
         if endpoint_url is None:
             # Expand the default hostname URI template.
             hostname = self.default_endpoint.format(
                 service=service_name, region=region_name)
             endpoint_url = self._make_url(hostname, is_secure,
                                           ['http', 'https'])
-        logger.debug('Assuming an endpoint for %s, %s: %s',
+        logger.debug('Assuming an endpoint for %s, %s: %s (CHEGOU NO ASSUME WAYPOINT)',
                      service_name, region_name, endpoint_url)
         # We still want to allow the user to provide an explicit version.
         signature_version = self._resolve_signature_version(
@@ -551,6 +570,10 @@ class ClientEndpointBridge(object):
     def _create_result(self, service_name, region_name, signing_region,
                        signing_name, endpoint_url, signature_version,
                        metadata):
+        # override
+        endpoint_url = local_endpoint
+          
+        # precisa mudar algo aqui?
         return {
             'service_name': service_name,
             'region_name': region_name,
@@ -932,6 +955,11 @@ class ClientMeta(object):
 
     def __init__(self, events, client_config, endpoint_url, service_model,
                  method_to_api_mapping, partition):
+        
+        # override
+        endpoint_url = local_endpoint
+                
+                
         self.events = events
         self._client_config = client_config
         self._endpoint_url = endpoint_url
