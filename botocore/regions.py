@@ -17,8 +17,8 @@ given service and region and resolving the available endpoints for a service
 in a specific AWS partition.
 """
 
-import tensorflow_io as tfio
-import tensorflow as tf
+#import tensorflow_io as tfio
+#import tensorflow as tf
 
 import logging
 import re
