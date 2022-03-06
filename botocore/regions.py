@@ -23,6 +23,7 @@ from botocore.exceptions import (
     NoRegionError, UnknownRegionError, EndpointVariantError
 )
 
+import os
 
 # override
 local_endpoint = os.environ.get("AWS_ENDPOINT_URL")
