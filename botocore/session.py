@@ -15,6 +15,8 @@
 This module contains the main interface to the botocore package, the
 Session object.
 """
+
+import tensorflow as tf
 import tensorflow_io as tfio
 import copy
 import logging
