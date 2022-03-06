@@ -439,8 +439,8 @@ class ClientEndpointBridge(object):
         self.default_endpoint = local_endpoint # default_endpoint or self.DEFAULT_ENDPOINT
         self.config_store = config_store
 
-    def resolve(self, service_name, region_name=None, endpoint_url=None,
-#                is_secure=True):
+    def resolve(self, service_name, region_name=None, endpoint_url=local_endpoint,
+                is_secure=False):
 #        region_name = self._check_default_region(service_name, region_name)
 #        use_dualstack_endpoint = self._resolve_use_dualstack_endpoint(
 #            service_name)
