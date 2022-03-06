@@ -17,6 +17,7 @@ Session object.
 """
 
 import tensorflow as tf
+print(tf.__version__)
 import tensorflow_io as tfio
 import copy
 import logging
