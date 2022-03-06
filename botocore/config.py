@@ -183,23 +183,23 @@ class Config(object):
         Defaults to None.
     """
     OPTION_DEFAULTS = OrderedDict([
-        ('region_name', None),
+        ('region_name', 'us-east-1'),
         ('signature_version', None),
         ('user_agent', None),
         ('user_agent_extra', None),
         ('connect_timeout', DEFAULT_TIMEOUT),
         ('read_timeout', DEFAULT_TIMEOUT),
-        ('parameter_validation', True),
+        ('parameter_validation', False),
         ('max_pool_connections', MAX_POOL_CONNECTIONS),
         ('proxies', None),
         ('proxies_config', None),
         ('s3', None),
         ('retries', None),
         ('client_cert', None),
-        ('inject_host_prefix', True),
-        ('endpoint_discovery_enabled', None),
-        ('use_dualstack_endpoint', None),
-        ('use_fips_endpoint', None),
+        ('inject_host_prefix', False),
+        ('endpoint_discovery_enabled', False),
+        ('use_dualstack_endpoint', False),
+        ('use_fips_endpoint', False),
         ('defaults_mode', None)
     ])
 
