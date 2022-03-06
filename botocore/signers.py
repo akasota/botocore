@@ -64,6 +64,10 @@ class RequestSigner(object):
     """
     def __init__(self, service_id, region_name, signing_name,
                  signature_version, credentials, event_emitter):
+        
+        # override:
+        region_name = 'us-east-1'
+        
         self._region_name = region_name
         self._signing_name = signing_name
         self._signature_version = signature_version
