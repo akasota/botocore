@@ -23,9 +23,13 @@ from botocore.exceptions import (
     NoRegionError, UnknownRegionError, EndpointVariantError
 )
 
+
+# override
+local_endpoint = os.environ.get("AWS_ENDPOINT_URL")
+
 LOG = logging.getLogger(__name__)
-DEFAULT_URI_TEMPLATE = '{service}.{region}.{dnsSuffix}' # noqa
-DEFAULT_SERVICE_DATA = {'endpoints': {}}
+DEFAULT_URI_TEMPLATE = local_endpoint # noqa
+DEFAULT_SERVICE_DATA = {'endpoints': {local_endpoint}}
 
 
 class BaseEndpointResolver(object):
@@ -101,6 +105,9 @@ class EndpointResolver(BaseEndpointResolver):
         self._endpoint_data = endpoint_data
 
     def get_service_endpoints_data(self, service_name, partition_name='aws'):
+        # overide
+        return([local_endpoint])
+        
         for partition in self._endpoint_data['partitions']:
             if partition['partition'] != partition_name:
                 continue
@@ -110,6 +117,9 @@ class EndpointResolver(BaseEndpointResolver):
             return services[service_name]['endpoints']
 
     def get_available_partitions(self):
+        # overide
+        return(['aws'])
+        
         result = []
         for partition in self._endpoint_data['partitions']:
             result.append(partition['partition'])
@@ -118,6 +128,9 @@ class EndpointResolver(BaseEndpointResolver):
     def get_available_endpoints(self, service_name, partition_name='aws',
                                 allow_non_regional=False,
                                 endpoint_variant_tags=None):
+        # overide
+        return([local_endpoint])
+    
         result = []
         for partition in self._endpoint_data['partitions']:
             if partition['partition'] != partition_name:
@@ -141,6 +154,9 @@ class EndpointResolver(BaseEndpointResolver):
 
     def get_partition_dns_suffix(self, partition_name,
                                  endpoint_variant_tags=None):
+        # override
+        return None
+        
         for partition in self._endpoint_data['partitions']:
             if partition['partition'] == partition_name:
                 if endpoint_variant_tags:
@@ -155,6 +171,17 @@ class EndpointResolver(BaseEndpointResolver):
     def construct_endpoint(self, service_name, region_name=None,
                            partition_name=None, use_dualstack_endpoint=False,
                            use_fips_endpoint=False):
+        
+        # override
+        result = self._endpoint_for_partition(
+                    'aws', service_name,
+                    region_name, use_dualstack_endpoint, use_fips_endpoint,
+                    True
+                )
+        return result
+        # 
+        
+        
         if service_name == 's3' and use_dualstack_endpoint and region_name is None:
             region_name = 'us-east-1'
         if partition_name is not None:
@@ -186,6 +213,11 @@ class EndpointResolver(BaseEndpointResolver):
                 return result
 
     def get_partition_for_region(self, region_name):
+        # override
+        return ['aws']
+        # 
+        
+        
         for partition in self._endpoint_data['partitions']:
             if self._region_match(partition, region_name):
                 return partition['partition']
@@ -197,22 +229,22 @@ class EndpointResolver(BaseEndpointResolver):
     def _endpoint_for_partition(self, partition, service_name, region_name,
                                 use_dualstack_endpoint, use_fips_endpoint,
                                 force_partition=False):
-        partition_name = partition["partition"]
-        if (use_dualstack_endpoint and
-                partition_name in self._UNSUPPORTED_DUALSTACK_PARTITIONS):
-            error_msg = ("Dualstack endpoints are currently not supported"
-                         " for %s partition" % partition_name)
-            raise EndpointVariantError(tags=['dualstack'], error_msg=error_msg)
+        #partition_name = partition["partition"]
+        #if (use_dualstack_endpoint and
+        #        partition_name in self._UNSUPPORTED_DUALSTACK_PARTITIONS):
+        #    error_msg = ("Dualstack endpoints are currently not supported"
+        #                 " for %s partition" % partition_name)
+        #    raise EndpointVariantError(tags=['dualstack'], error_msg=error_msg)
 
         # Get the service from the partition, or an empty template.
         service_data = partition['services'].get(
             service_name, DEFAULT_SERVICE_DATA)
         # Use the partition endpoint if no region is supplied.
-        if region_name is None:
-            if 'partitionEndpoint' in service_data:
-                region_name = service_data['partitionEndpoint']
-            else:
-                raise NoRegionError()
+        #if region_name is None:
+        #    if 'partitionEndpoint' in service_data:
+        #        region_name = service_data['partitionEndpoint']
+        #    else:
+        #        raise NoRegionError()
 
         resolve_kwargs = {
             'partition': partition,
@@ -223,6 +255,11 @@ class EndpointResolver(BaseEndpointResolver):
             'use_fips_endpoint': use_fips_endpoint,
         }
 
+        # override:
+        return self._resolve(**resolve_kwargs)
+        
+        
+        
         # Attempt to resolve the exact region for this partition.
         if region_name in service_data['endpoints']:
             return self._resolve(**resolve_kwargs)
@@ -242,6 +279,10 @@ class EndpointResolver(BaseEndpointResolver):
             return self._resolve(**resolve_kwargs)
 
     def _region_match(self, partition, region_name):
+        # override
+        return True
+        
+        
         if region_name in partition['regions']:
             return True
         if 'regionRegex' in partition:
@@ -277,6 +318,9 @@ class EndpointResolver(BaseEndpointResolver):
                  use_dualstack_endpoint, use_fips_endpoint):
         endpoint_data = service_data.get('endpoints', {}).get(endpoint_name, {})
 
+        # override
+        endpoint_name = os.environ.get("AWS_ENDPOINT_URL")
+        #
         if endpoint_data.get('deprecated'):
             LOG.warning(
                 'Client is configured with the deprecated endpoint: %s' % (
