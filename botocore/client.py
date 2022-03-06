@@ -472,8 +472,8 @@ class ClientEndpointBridge(object):
 #                                         endpoint_url, is_secure)
 #   
 #   
-        # aqui precisa mudar esse region name?
-        return self._assume_endpoint(service_name, region_name,
+         # aqui precisa mudar esse region name?
+         return self._assume_endpoint(service_name, region_name,
                                          local_endpoint, is_secure)
 
         
